@@ -49,10 +49,10 @@ run_tree(Tree, FeatureModule) ->
                                     try
                                         process_line(Entry, Acc, FeatureModule)
                                     catch
-                                        Class:Reason ->
+                                        Class:Reason:Stacktrace ->
                                             call_teardown(FeatureModule,
                                                           call_scenario_teardown(FeatureModule, InterimState)),
-                                        erlang:raise(Class, Reason, erlang:get_stacktrace())
+                                        erlang:raise(Class, Reason, Stacktrace)
                                     end
                             end,
                             {false, State1, #cucumberl_stats{}},
@@ -61,11 +61,10 @@ run_tree(Tree, FeatureModule) ->
             call_teardown(FeatureModule, State3),
             Stats
         catch
-            Err:Reason ->
+            Err:Reason:Stacktrace ->
                 %% something else went wrong, which means fail
                 io:format("Feature Failed: ~p:~p ~p",
-                          [Err, Reason,
-                           erlang:get_stacktrace()]),
+                          [Err, Reason, Stacktrace]),
                 failed
         end,
     case Result of
@@ -116,12 +115,11 @@ process_line({Type, LineNum, Matchables, Line},
                         attempt_step(FeatureModule, G, State, Matchables,
                                    Line, LineNum)
                     catch
-                        Err:Reason ->
+                        Err:Reason:Stacktrace ->
                             io:format("~nSTEP: ~s FAILED: ~n ~p:~p ~p~n",
-                                      [Line, Err, Reason,
-                                       erlang:get_stacktrace()]),
+                                      [Line, Err, Reason, Stacktrace]),
                             %% something else went wrong, which means fail
-                            {failed, {Err, Reason, erlang:get_stacktrace()}}
+                            {failed, {Err, Reason, Stacktrace}}
                     end,
 
                 {SkipScenario, R,
